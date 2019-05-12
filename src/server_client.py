@@ -32,12 +32,10 @@ def server():
     server.settimeout(0.2)
     server.bind(('', server_port))
 
-    m = b'[%s][%s] Hello' % (local_IP, local_MAC)
-    counter = 0
+    m = bytes('[%s][%s] Hello' % (local_IP, local_MAC), encoding='utf-8')
 
     while True:
         server.sendto(m, ('<broadcast>', client_port))
-        counter += 1
         print('Sent: ', m)
         time.sleep(1)
 
