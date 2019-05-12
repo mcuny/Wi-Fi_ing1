@@ -35,7 +35,7 @@ def server():
     m = bytes('[%s][%s] Hello' % (local_IP, local_MAC), encoding='utf-8')
 
     while True:
-        server.sendto(m, ('<broadcast>', client_port))
+        server.sendto(m, (dest_IP, client_port))
         print('Sent: ', m)
         time.sleep(1)
 
