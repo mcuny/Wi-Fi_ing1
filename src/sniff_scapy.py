@@ -1,5 +1,5 @@
+from pyDot11.lib import *
 from scapy.all import *
-from rc4 import rc4
 import binascii
 import sys
 import zlib
@@ -37,6 +37,7 @@ def seedGen(iv, keyText):
 
     return iv + key
 
+
 sniff(count=int(sys.argv[1]), iface="wlan0mon", prn=beacon_targetting)
 
 if info[1] == 'ff:ff:ff:ff:ff:ff':
@@ -49,12 +50,18 @@ msg = b'Bonjour'
 
 for pkt in packets:
     seed = seedGen(pkt[Dot11WEP].iv, AP_PWD)
-    decyphered = rc4(pkt[Dot11WEP].wepdata, seed)
 
-    stack = LLC()/IP(src='192.168.1.1', dst='192.168.1.129')/UDP(sport=44444, dport=37020, len=len(msg))/msg
-    cyphered = rc4(bytes(stack), seed)
-    pkt[Dot11WEP].wepdata = cyphered
-    pkt[Dot11WEP].icv = zlib.crc32(bytes(stack))
-    pkt.addr1 = pkt.addr2
-    pkt.addr2 = pkt.addr3
-    sendp(pkt, iface='wlan0mon')
+    decyphered = wepDecrypt(pkt, keyText=AP_PWD)
+    print(decyphered)
+
+    # sendp(pkt, iface='wlan0mon')
+    print('-------------------------------')
+    # stack = LLC()/IP(src='192.168.1.1', dst='192.168.1.129')/UDP(sport=44444, dport=37020, len=len(msg))/msg
+    # cyphered = rc4(bytes(stack), seed)
+    # pkt[Dot11WEP].wepdata = cyphered
+    # pkt[Dot11WEP].icv = zlib.crc32(bytes(stack))
+    # pkt.addr1 = pkt.addr2
+    # pkt.addr2 = pkt.addr3
+    # sendp(pkt, iface='wlan0mon')
+
+
