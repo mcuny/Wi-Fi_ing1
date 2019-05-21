@@ -24,8 +24,8 @@ def rc4(data: bytes, key: bytes)-> str:
 
 def KSA(key: bytes) -> list:
     """
-    Key Scheduling algorithm is
-    the first process in rc4. It
+    Key Scheduling algorithm
+    is the first process in rc4. It
     returns an 'extended' key which
     has a higher enthropy then the
     simple concatenation.
