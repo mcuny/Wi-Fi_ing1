@@ -14,9 +14,4 @@ pkt1 = RadioTap()/Dot11(addr1=broadcast,
                 /Dot11Elt(ID=3, info='\x0a')\
                 /Dot11Elt(ID=5, info='\x00\x01\x00\x00')
 
-pkt2 = RadioTap()/Dot11(addr1=client,
-                        addr2=bssid,
-                        addr3=bssid)\
-                /'hey'
-
-sendp(pkt2, iface='wlan0mon', count=10000, inter=.01)
+sendp(pkt, iface='wlan0mon', count=10000, inter=.01)
