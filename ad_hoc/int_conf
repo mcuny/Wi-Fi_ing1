@@ -2,8 +2,8 @@
 auto lo
 iface lo inet loopback
 
-auto wlp3s0
-iface wlp3s0 inet static
+auto <interface>
+iface <interface> inet static
         address 10.0.0.1
         netmask 255.255.255.0
         wireless-essid HADHOCK
