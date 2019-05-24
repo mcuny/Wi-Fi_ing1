@@ -1,0 +1,12 @@
+# interfaces(5) file used by ifup(8) and ifdown(8)
+auto lo
+iface lo inet loopback
+
+auto <interface>
+iface <interface> inet static
+        address 10.0.0.1
+        netmask 255.255.255.0
+        wireless-essid HADHOCK
+        wireless-channel 5
+        wireless-mode ad-hoc
+        wireless-power on
