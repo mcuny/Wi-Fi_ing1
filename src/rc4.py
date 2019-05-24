@@ -1,3 +1,6 @@
+from binascii import unhexlify
+from scapy.utils import hexstr
+
 def rc4(data: bytes, key: bytes)-> str:
     """
     RC4 is a stream cypher.
@@ -82,6 +85,9 @@ def generate_seed(iv: bytes, pwd: bytes) -> bytes:
     returns:
         bytes: packet key
     """
-    return iv + binascii.unhexlify(hexstr(pwd, onlyhex = 1))
-
-
+    keyLen = len(pwd)
+    if keyLen == 5:
+        key = unhexlify(hexstr(pwd, onlyhex = 1).replace(' ', ''))
+    elif keyLen == 10:
+        key = unhexlify(pwd)
+     return iv + key
