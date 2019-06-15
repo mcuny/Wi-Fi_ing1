@@ -90,4 +90,4 @@ def generate_seed(iv: bytes, pwd: bytes) -> bytes:
         key = unhexlify(hexstr(pwd, onlyhex = 1).replace(' ', ''))
     elif keyLen == 10:
         key = unhexlify(pwd)
-     return iv + key
+    return iv + key
