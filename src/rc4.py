@@ -18,12 +18,9 @@ def rc4(data: bytes, key: bytes)-> str:
     """
     extended_key = KSA(key)
     key_stream = PRGA(extended_key, len(data))
-    try:
-        output = [chr(b ^ key_stream[i]) for i, b in enumerate(data)]
-    except:
-        output = [chr(ord(b) ^ key_stream[i]) for i, b in enumerate(data)]
+    output = [(b ^ key_stream[i]) for i, b in enumerate(data)]
 
-    return "".join(output)
+    return bytearray(output)
 
 def KSA(key: bytes) -> list:
     """

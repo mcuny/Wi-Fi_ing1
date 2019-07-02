@@ -1,8 +1,10 @@
 import argparse
 import sys
 from rc4 import rc4, generate_seed
-from scapy.all import Dot11FCS, LLC, Dot11Beacon, Dot11WEP, sniff, UDP, IP, sendp
-from scapy.utils import hexstr
+from scapy.all import Dot11FCS, LLC, Dot11Beacon, Dot11WEP, sniff, UDP, IP, send, sendp, Raw
+from scapy.utils import hexstr, hexdiff
+import binascii
+from zlib import crc32
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-iface", help="Wireless interface", type=str, required=True)
@@ -32,26 +34,20 @@ def decypher(pkt):
     # Build seed and decypher
     key_stream = generate_seed(pkt[Dot11WEP].iv, args.pwd)
     decyphered = rc4(pkt[Dot11WEP].wepdata, key_stream)
+    stack = LLC(decyphered)
 
-    # Build scapy stack from decyphered bytes
-    stack = hexstr(decyphered).split(' ')
-    stack = ''.join([e for e in stack if len(e) == 2])
-    stack = LLC(bytearray.fromhex(stack))
-    print(stack.summary())
+    if not (IP in stack and UDP in stack and Raw in stack):
+        return None
 
-    # Swap src and dst addresses for IP and 802.11
-    stack[IP].src, stack[IP].dst = stack[IP].dst, stack[IP].src
-    pkt[Dot11FCS].addr1, pkt[Dot11FCS].addr3 = pkt[Dot11FCS].addr3, pkt[Dot11FCS].addr1
-
-    # Recompute UDP/IP CRC
     del pkt[Dot11FCS].fcs
     del stack[IP].chksum
     del stack[UDP].chksum
-    pass
-    # Correct UDP/IP lengths
-    pass
-    # Cypher UDP stack and replace wepdata field
+
+    stack[IP].src, stack[IP].dst = stack[IP].dst, stack[IP].src
+    pkt[Dot11FCS].addr1, pkt[Dot11FCS].addr3 = pkt[Dot11FCS].addr3, pkt[Dot11FCS].addr1
+
     pkt[Dot11WEP].wepdata = rc4(bytes(stack), key_stream)
+    pkt[Dot11WEP].icv = crc32(bytes(stack))
 
     return pkt
 
@@ -61,4 +57,16 @@ data = []
 sniff(count=args.sc, iface=args.iface, prn=sniffareedoo(addr_cond, Dot11WEP))
 
 for pkt in data:
-    decypher(pkt)
+    if Raw in pkt:
+        pkt[IP].src, pkt[IP].dst = pkt[IP].dst, pkt[IP].src
+        pkt[Dot11FCS].addr1, pkt[Dot11FCS].addr3 = pkt[Dot11FCS].addr3, pkt[Dot11FCS].addr1
+
+        del pkt[IP].chksum
+        del pkt[UDP].chksum
+        del pkt[Dot11FCS].fcs
+
+        sendp(pkt, iface=args.iface, count=args.sc)
+    else:
+        decPacket = decypher(pkt)
+        if decPacket:
+            sendp(decPacket, iface=args.iface, count=args.sc)
