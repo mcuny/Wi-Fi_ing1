@@ -11,5 +11,3 @@ Programme des manipulations:
 4 - aircrack-ng sur WPA
 
 5 - openssl
-
-C'est notre premier TP, on espere que l'archi marche sur tout vos PC :)
